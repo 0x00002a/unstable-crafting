@@ -22,7 +22,11 @@
   "depends": {
     "fabric": "*",
     "minecraft": ">=${minecraft_version}",
-    "architectury": ">=${architectury_version}"
+    "architectury": ">=${architectury_version}",
+    "com_electronwill_night-config_core": "*",
+    "com_electronwill_night-config_toml": "*"
   },
-  "mixins": ["unstablecrafting.mixins.json"]
+  "mixins": [
+    "unstablecrafting.mixins.json"
+  ]
 }

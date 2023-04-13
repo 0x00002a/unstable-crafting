@@ -20,6 +20,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import x2a.unstablecrafting.mixins.RecipeMixin;
@@ -35,6 +36,8 @@ public class UCMod {
 
     private static final Random RAND = new Random();
     public static final Map<ItemStack, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
+
+    public static UCConfig CONFIG;
 
     static void randomiseRecipes(MinecraftServer server) {
         var target = server.getRecipeManager();
@@ -65,7 +68,8 @@ public class UCMod {
         }*/
     }
 
-    public static void init() {
+    public static void init(UCConfig config) {
+        CONFIG = config;
         Log.info("Welcome to the world of recipes with half lives");
         LifecycleEvent.SERVER_STARTING.register(server -> {
             RAND.setSeed(server.getWorldData().worldGenSettings().seed());
