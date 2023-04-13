@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "unstablecrafting",
+  "version": "${version}",
+  "name": "Unstable Crafting",
+  "description": "Rotating crafts",
+  "authors": [
+    "0x00002a"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "MIT",
+  "icon": "assets/unstablecrafting/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "x2a.unstablecrafting.fabric.UCModFabric"
+    ]
+  },
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=${minecraft_version}",
+    "architectury": ">=${architectury_version}"
+  }
+}

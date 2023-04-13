@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "x2a.unstablecrafting",
+    "id": "unstablecrafting",
+    "version": "${version}",
+    "name": "Unstable Crafting",
+    "description": "Rotating recipes",
+    "authors": ["0x00002a"],
+    "license": "MIT",
+    "icon": "assets/unstablecrafting/icon.png",
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "environment": "*",
+    "entrypoints": {
+      "init": [
+        "net.unstablecrafting.quilt.UCModQuilt"
+      ]
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "version": "*"
+      },
+      {
+        "id": "quilt_base",
+        "version": "*"
+      },
+      {
+        "id": "minecraft",
+        "version": ">=${minecraft_version}"
+      },
+      {
+        "id": "architectury",
+        "version": ">=${architectury_version}"
+      }
+    ]
+  }
+}
