@@ -33,6 +33,7 @@
         "id": "architectury",
         "version": ">=${architectury_version}"
       }
-    ]
+    ],
+    "mixins": ["unstablecrafting.mixins.json"]
   }
 }

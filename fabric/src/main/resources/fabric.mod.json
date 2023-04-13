@@ -23,5 +23,6 @@
     "fabric": "*",
     "minecraft": ">=${minecraft_version}",
     "architectury": ">=${architectury_version}"
-  }
+  },
+  "mixins": ["unstablecrafting.mixins.json"]
 }

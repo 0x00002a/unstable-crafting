@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "x2a.unstablecrafting.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8.5",
+  "mixins": [
+    "RecipeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
