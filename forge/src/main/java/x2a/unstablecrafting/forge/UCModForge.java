@@ -19,7 +19,7 @@ public class UCModForge {
         var builder_serve = new ForgeConfigSpec.Builder();
         var serve = new UCConfig.ServerConfig(builder_serve);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, builder_cli.build());
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, builder_cli.build());
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, builder_serve.build());
         UCMod.init(new UCConfig(serve, cli));
     }
 }

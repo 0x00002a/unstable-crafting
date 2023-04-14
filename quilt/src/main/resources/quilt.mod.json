@@ -6,7 +6,9 @@
     "version": "${version}",
     "name": "Unstable Crafting",
     "description": "Rotating recipes",
-    "authors": ["0x00002a"],
+    "authors": [
+      "0x00002a"
+    ],
     "license": "MIT",
     "icon": "assets/unstablecrafting/icon.png",
     "intermediate_mappings": "net.fabricmc:intermediary",
@@ -32,8 +34,14 @@
       {
         "id": "architectury",
         "version": ">=${architectury_version}"
+      },
+      {
+        "id": "forgeconfigapi",
+        "version": ">=${forgeapi_config_version}"
       }
     ],
-    "mixins": ["unstablecrafting.mixins.json"]
+    "mixins": [
+      "unstablecrafting.mixins.json"
+    ]
   }
 }

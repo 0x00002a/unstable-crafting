@@ -23,8 +23,7 @@
     "fabric": "*",
     "minecraft": ">=${minecraft_version}",
     "architectury": ">=${architectury_version}",
-    "com_electronwill_night-config_core": "*",
-    "com_electronwill_night-config_toml": "*"
+    "forgeconfigapi": ">=${forgeapi_config_version}"
   },
   "mixins": [
     "unstablecrafting.mixins.json"
