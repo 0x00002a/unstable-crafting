@@ -8,13 +8,6 @@ public class UCConfig {
         builder.comment(comment).define(name, defaultValue);
     }
 
-    private static long msToTicks(long ms) {
-        return ms / 50;
-    }
-
-    private static long minsToTicks(long mins) {
-        return msToTicks(mins * 60 * 1000);
-    }
 
     public final ServerConfig server;
     public final ClientConfig client;
@@ -23,9 +16,11 @@ public class UCConfig {
         public final ConfigValue<Long> ticksPerRandomise;
 
         public ServerConfig(ForgeConfigSpec.Builder builder) {
-            ticksPerRandomise = builder.comment("Ticks per randomisation (20 ticks/second)").defineInRange(
-                    "option.unstablecrafting.randomise_ticks",
-                    minsToTicks(10), 0, Long.MAX_VALUE);
+            ticksPerRandomise =
+                    builder.comment("Ticks per randomisation " +
+                            "(20 ticks/second)").translation("option.unstablecrafting.randomise_ticks").defineInRange(
+                            "randomise_ticks",
+                            UCMod.minsToTicks(30), 0, Long.MAX_VALUE);
         }
     }
 
@@ -33,8 +28,9 @@ public class UCConfig {
         public final ConfigValue<Boolean> displayRandomiseWarnings;
 
         public ClientConfig(ForgeConfigSpec.Builder builder) {
-            displayRandomiseWarnings = builder.comment("Show chat warnings when randomisation is incoming").define(
-                    "option.unstablecrafting.display_randomise_warnings", true);
+            displayRandomiseWarnings =
+                    builder.comment("Show chat warnings when randomisation is incoming").translation("option.unstablecrafting.display_randomise_warnings").define(
+                            "display_randomise_warnings", true);
         }
     }
 

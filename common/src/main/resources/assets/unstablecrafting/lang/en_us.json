@@ -1,4 +1,6 @@
 {
   "option.unstablecrafting.display_randomise_warnings": "Display randomisation warnings",
-  "option.unstablecrafting.randomise_ticks": "Ticks per randomisation"
+  "option.unstablecrafting.randomise_ticks": "Ticks per randomisation",
+  "message.unstablecrafting.randomise_warn": "%d minutes until recipe randomisation",
+  "message.unstablecrafting.randomise_warn_secs": "Randomisation in %d"
 }

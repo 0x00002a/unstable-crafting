@@ -7,12 +7,17 @@ import dev.architectury.registry.CreativeTabRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.Registries;
 import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Game;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -53,19 +58,28 @@ public class UCMod {
             var repl = outputs.remove(outputs.size() - 1).getResultItem();
             RECIPE_REDIRECTS.put(recipe.getResultItem(), repl);
         }
-        server.getPlayerList().broadcastAll(new ClientboundUpdateRecipesPacket(target.getRecipes()));
-        /*for (var recipe : recipes) {
-            var repl = outputs.remove(outputs.size() - 1).getResultItem();
-            var replace = (RecipeMixin)recipe;
-            RecipeMixin<?> replaceRecipe;
-            if (recipe instanceof RecipeMixin<?> r) {
-                replaceRecipe = r;
-            } else {
-                replaceRecipe = new RandomRecipe<>(recipe);
-            }
-            replaceRecipe.newOutput = repl;
-            replacement.add(replaceRecipe);
-        }*/
+        var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
+        server.getPlayerList().getPlayers().forEach(p -> {
+            p.connection.send(pkt);
+            p.getRecipeBook().sendInitialRecipeBook(p);
+        });
+    }
+
+    public static long msToTicks(long ms) {
+        return ms / 50;
+    }
+
+
+    public static long secsToTicks(long secs) {
+        return secs * 20;
+    }
+
+    public static long minsToTicks(long mins) {
+        return msToTicks(mins * 60 * 1000);
+    }
+
+    public static long ticksToMins(long ticks) {
+        return ticks / 20 / 60;
     }
 
     public static void init(UCConfig config) {
@@ -74,6 +88,38 @@ public class UCMod {
         LifecycleEvent.SERVER_STARTING.register(server -> {
             RAND.setSeed(server.getWorldData().worldGenSettings().seed());
             randomiseRecipes(server);
+        });
+        TickEvent.SERVER_POST.register(inst -> {
+            var timeToRandom = inst.getTickCount() % CONFIG.server.ticksPerRandomise.get();
+            if (timeToRandom == 0) {
+                randomiseRecipes(inst);
+            }
+        });
+        TickEvent.PLAYER_POST.register(player -> {
+            if (!CONFIG.client.displayRandomiseWarnings.get()) {
+                return;
+            }
+            var timeToRandom =
+                    CONFIG.server.ticksPerRandomise.get() - (player.tickCount % CONFIG.server.ticksPerRandomise.get());
+            ChatFormatting colour = null;
+            if (timeToRandom <= secsToTicks(5)) {
+                if (timeToRandom % 20 == 0) {
+                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn_secs").withStyle(ChatFormatting.DARK_RED));
+                    player.playSound(SoundEvents.NOTE_BLOCK_CHIME);
+                }
+            } else {
+                if (timeToRandom == minsToTicks(1)) {
+                    colour = ChatFormatting.RED;
+                } else if (timeToRandom == minsToTicks(5)) {
+                    colour = ChatFormatting.YELLOW;
+                } else if (timeToRandom == minsToTicks(10)) {
+                    colour = ChatFormatting.GREEN;
+                }
+                if (colour != null) {
+                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn",
+                            ticksToMins(timeToRandom)).withStyle(ChatFormatting.RED));
+                }
+            }
         });
     }
 }
