@@ -1,52 +1,31 @@
 package x2a.unstablecrafting;
 
-import com.google.common.base.Suppliers;
-import dev.architectury.event.events.client.ClientRecipeUpdateEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.registry.CreativeTabRegistry;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.Registries;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Game;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import x2a.unstablecrafting.mixins.RecipeMixin;
-import net.minecraft.network.protocol.game.ClientboundRecipePacket;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class UCMod {
     public static final String MOD_ID = "unstablecrafting";
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
 
     private static final Random RAND = new Random();
-    public static final Map<ItemStack, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
+    public static final Map<ItemStackKey, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
 
     public static UCConfig CONFIG;
 
     static void randomiseRecipes(MinecraftServer server) {
+        RECIPE_REDIRECTS.clear();
         var target = server.getRecipeManager();
         var outputs = new ArrayList<>(target.getRecipes());
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
@@ -55,10 +34,9 @@ public class UCMod {
         var replacement = new ArrayList<Recipe<?>>();
         replacement.ensureCapacity(recipes.size());
 
-        RECIPE_REDIRECTS.clear();
         for (var recipe : recipes) {
             var repl = outputs.remove(outputs.size() - 1).getResultItem();
-            RECIPE_REDIRECTS.put(recipe.getResultItem(), repl);
+            RECIPE_REDIRECTS.put(new ItemStackKey(recipe.getResultItem()), repl);
         }
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
         server.getPlayerList().getPlayers().forEach(p -> {
@@ -86,6 +64,15 @@ public class UCMod {
 
     public static long ticksToSecs(long ticks) {
         return ticks / 20;
+    }
+
+    @Nullable
+    public static ItemStack replaceResult(ItemStack orig) {
+        var replace = UCMod.RECIPE_REDIRECTS.get(new ItemStackKey(orig));
+        if (replace != null) {
+            return replace.copy();
+        }
+        return null;
     }
 
     public static void init(UCConfig config) {
