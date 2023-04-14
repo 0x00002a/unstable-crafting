@@ -1,6 +1,7 @@
 package x2a.unstablecrafting;
 
 import com.google.common.base.Suppliers;
+import dev.architectury.event.events.client.ClientRecipeUpdateEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.registry.CreativeTabRegistry;
@@ -82,6 +83,10 @@ public class UCMod {
         return ticks / 20 / 60;
     }
 
+    public static long ticksToSecs(long ticks) {
+        return ticks / 20;
+    }
+
     public static void init(UCConfig config) {
         CONFIG = config;
         Log.info("Welcome to the world of recipes with half lives");
@@ -96,15 +101,19 @@ public class UCMod {
             }
         });
         TickEvent.PLAYER_POST.register(player -> {
-            if (!CONFIG.client.displayRandomiseWarnings.get()) {
+            if (player.isLocalPlayer() || !CONFIG.client.displayRandomiseWarnings.get()) {
                 return;
             }
             var timeToRandom =
                     CONFIG.server.ticksPerRandomise.get() - (player.tickCount % CONFIG.server.ticksPerRandomise.get());
             ChatFormatting colour = null;
-            if (timeToRandom <= secsToTicks(5)) {
+            if (player.tickCount % CONFIG.server.ticksPerRandomise.get() == 0) {
+                player.sendSystemMessage(Component.translatable("message.unstablecrafting.random_time").withStyle(ChatFormatting.DARK_AQUA));
+                player.playSound(SoundEvents.BELL_RESONATE);
+            } else if (timeToRandom <= secsToTicks(5)) {
                 if (timeToRandom % 20 == 0) {
-                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn_secs").withStyle(ChatFormatting.DARK_RED));
+                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn_secs",
+                            ticksToSecs(timeToRandom)).withStyle(ChatFormatting.DARK_RED));
                     player.playSound(SoundEvents.NOTE_BLOCK_CHIME);
                 }
             } else {
