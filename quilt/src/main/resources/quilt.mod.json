@@ -15,7 +15,7 @@
     "environment": "*",
     "entrypoints": {
       "init": [
-        "net.unstablecrafting.quilt.UCModQuilt"
+        "x2a.unstablecrafting.quilt.UCModQuilt"
       ]
     },
     "depends": [
@@ -36,7 +36,7 @@
         "version": ">=${architectury_version}"
       },
       {
-        "id": "forgeconfigapi",
+        "id": "forgeconfigapiport",
         "version": ">=${forgeapi_config_version}"
       }
     ],
