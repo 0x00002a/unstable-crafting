@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -104,10 +105,11 @@ public class UCMod {
             if (player.isLocalPlayer() || !CONFIG.client.displayRandomiseWarnings.get()) {
                 return;
             }
-            var timeToRandom =
-                    CONFIG.server.ticksPerRandomise.get() - (player.tickCount % CONFIG.server.ticksPerRandomise.get());
+            var tickCount = player.level.getServer().getTickCount();
+            var interval = CONFIG.server.ticksPerRandomise.get();
+            var timeToRandom = interval - (tickCount % interval);
             ChatFormatting colour = null;
-            if (player.tickCount % CONFIG.server.ticksPerRandomise.get() == 0) {
+            if (tickCount % interval == 0) {
                 player.sendSystemMessage(Component.translatable("message.unstablecrafting.random_time").withStyle(ChatFormatting.DARK_AQUA));
                 player.playSound(SoundEvents.BELL_RESONATE);
             } else if (timeToRandom <= secsToTicks(5)) {
