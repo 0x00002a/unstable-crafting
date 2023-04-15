@@ -82,6 +82,7 @@ public class UCMod {
         LifecycleEvent.SERVER_STARTING.register(server -> {
             RAND.setSeed(server.getWorldData().worldGenSettings().seed());
             randomiseRecipes(server);
+            Log.info("Recipes have started to decay");
         });
         TickEvent.SERVER_POST.register(inst -> {
             var timeToRandom = inst.getTickCount() % CONFIG.server.ticksPerRandomise.get();
