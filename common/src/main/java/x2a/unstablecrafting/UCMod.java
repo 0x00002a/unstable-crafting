@@ -21,24 +21,24 @@ public class UCMod {
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
 
     private static final Random RAND = new Random();
-    public static final Map<ResourceLocation, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
+    public static Map<ResourceLocation, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
 
     public static UCConfig CONFIG;
 
     static void randomiseRecipes(MinecraftServer server) {
+        var redirects = new HashMap<ResourceLocation, ItemStack>();
         RECIPE_REDIRECTS.clear();
         var target = server.getRecipeManager();
         var outputs = new ArrayList<>(target.getRecipes());
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
         Collections.shuffle(outputs, RAND);
         var recipes = target.getRecipes();
-        var replacement = new ArrayList<Recipe<?>>();
-        replacement.ensureCapacity(recipes.size());
 
         for (var recipe : recipes) {
             var repl = outputs.remove(outputs.size() - 1).getResultItem();
-            RECIPE_REDIRECTS.put(recipe.getId(), repl);
+            redirects.put(recipe.getId(), repl);
         }
+        RECIPE_REDIRECTS = redirects;
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
         server.getPlayerList().getPlayers().forEach(p -> {
             p.connection.send(pkt);
