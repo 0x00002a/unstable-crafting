@@ -9,8 +9,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import x2a.unstablecrafting.UCMod;
 
 
-@Mixin({ShapedRecipe.class, AbstractCookingRecipe.class, ShapelessRecipe.class, CustomRecipe.class})
+@Mixin(value = {ShapedRecipe.class, AbstractCookingRecipe.class,
+        ShapelessRecipe.class, CustomRecipe.class,
+})
 public abstract class MixinRecipeGetResultItem {
+
     @Inject(at = @At("RETURN"), method = "getResultItem", cancellable = true)
     public void unstablecrafting$afterGetResultItem(CallbackInfoReturnable<ItemStack> cir) {
         var replace = UCMod.replaceResult(((Recipe<?>) this).getId());

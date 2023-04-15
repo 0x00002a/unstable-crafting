@@ -9,14 +9,19 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UCMod {
+    public static final Class<?>[] SUPPORTED_RECIPE_TYPES = {ShapedRecipe.class, AbstractCookingRecipe.class,
+            ShapelessRecipe.class, CustomRecipe.class,
+    };
+
     public static final String MOD_ID = "unstablecrafting";
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
 
@@ -29,12 +34,13 @@ public class UCMod {
         var redirects = new HashMap<ResourceLocation, ItemStack>();
         RECIPE_REDIRECTS.clear();
         var target = server.getRecipeManager();
-        var outputs = new ArrayList<>(target.getRecipes());
+        var targetRecipes =
+                target.getRecipes().stream().filter(r -> Arrays.stream(SUPPORTED_RECIPE_TYPES).anyMatch(c -> c.isInstance(r))).toList();
+        var outputs = new ArrayList<>(targetRecipes);
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
         Collections.shuffle(outputs, RAND);
-        var recipes = target.getRecipes();
 
-        for (var recipe : recipes) {
+        for (var recipe : targetRecipes) {
             var repl = outputs.remove(outputs.size() - 1).getResultItem();
             redirects.put(recipe.getId(), repl);
         }
