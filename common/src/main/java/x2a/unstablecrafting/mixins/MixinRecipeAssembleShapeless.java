@@ -24,7 +24,5 @@ public abstract class MixinRecipeAssembleShapeless {
         if (replaced != null) {
             cir.setReturnValue(replaced);
         }
-        UCMod.Log.info("after assemble {} -> {}", cir.getReturnValue().toString(),
-                replaced != null ? replaced.toString() : "null");
     }
 }
