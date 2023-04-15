@@ -2,6 +2,7 @@ package x2a.unstablecrafting;
 
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.networking.NetworkChannel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
@@ -13,9 +14,9 @@ import net.minecraft.world.item.crafting.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import x2a.unstablecrafting.network.RandomiseWarningPacket;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class UCMod {
     public static final Class<?>[] SUPPORTED_RECIPE_TYPES = {ShapedRecipe.class, AbstractCookingRecipe.class,
@@ -27,6 +28,8 @@ public class UCMod {
 
     private static final Random RAND = new Random();
     public static Map<ResourceLocation, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
+    public static final NetworkChannel RAND_WARNING_CHAN = NetworkChannel.create(new ResourceLocation(MOD_ID,
+            "randomise_time_update"));
 
     public static UCConfig CONFIG;
 
@@ -82,8 +85,11 @@ public class UCMod {
         return null;
     }
 
+
     public static void init(UCConfig config) {
         CONFIG = config;
+        RAND_WARNING_CHAN.register(RandomiseWarningPacket.class, RandomiseWarningPacket::encode, RandomiseWarningPacket::new,
+                RandomiseWarningPacket::apply);
         Log.info("Welcome to the world of recipes with half lives");
         LifecycleEvent.SERVER_STARTING.register(server -> {
             RAND.setSeed(server.getWorldData().worldGenSettings().seed());
@@ -91,41 +97,40 @@ public class UCMod {
             Log.info("Recipes have started to decay");
         });
         TickEvent.SERVER_POST.register(inst -> {
-            var timeToRandom = inst.getTickCount() % CONFIG.server.ticksPerRandomise.get();
-            if (timeToRandom == 0) {
-                randomiseRecipes(inst);
-            }
-        });
-        TickEvent.PLAYER_POST.register(player -> {
-            if (player.isLocalPlayer() || !CONFIG.client.displayRandomiseWarnings.get()) {
-                return;
-            }
-            var tickCount = player.level.getServer().getTickCount();
+            var tickCount = inst.getTickCount();
             var interval = CONFIG.server.ticksPerRandomise.get();
             var timeToRandom = interval - (tickCount % interval);
-            ChatFormatting colour = null;
             if (tickCount % interval == 0) {
-                player.sendSystemMessage(Component.translatable("message.unstablecrafting.random_time").withStyle(ChatFormatting.DARK_AQUA));
-                player.playSound(SoundEvents.BELL_RESONATE);
-            } else if (timeToRandom <= secsToTicks(5)) {
-                if (timeToRandom % 20 == 0) {
-                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn_secs",
-                            ticksToSecs(timeToRandom)).withStyle(ChatFormatting.DARK_RED));
-                    player.playSound(SoundEvents.NOTE_BLOCK_CHIME);
-                }
-            } else {
-                if (timeToRandom == minsToTicks(1)) {
-                    colour = ChatFormatting.RED;
-                } else if (timeToRandom == minsToTicks(5)) {
-                    colour = ChatFormatting.YELLOW;
-                } else if (timeToRandom == minsToTicks(10)) {
-                    colour = ChatFormatting.GREEN;
-                }
-                if (colour != null) {
-                    player.sendSystemMessage(Component.translatable("message.unstablecrafting.randomise_warn",
-                            ticksToMins(timeToRandom)).withStyle(ChatFormatting.RED));
-                }
+                randomiseRecipes(inst);
             }
+            inst.getPlayerList().getPlayers().forEach(player -> {
+                ChatFormatting colour = null;
+                if (tickCount % interval == 0) {
+                    RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.random_time").withStyle(ChatFormatting.DARK_AQUA),
+                            SoundEvents.BELL_RESONATE));
+                } else if (timeToRandom <= secsToTicks(5)) {
+                    if (timeToRandom % 20 == 0) {
+                        RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.randomise_warn_secs",
+                                ticksToSecs(timeToRandom)).withStyle(ChatFormatting.DARK_RED),
+                                SoundEvents.NOTE_BLOCK_CHIME));
+                    }
+                } else {
+                    if (timeToRandom == minsToTicks(1)) {
+                        colour = ChatFormatting.RED;
+                    } else if (timeToRandom == minsToTicks(5)) {
+                        colour = ChatFormatting.YELLOW;
+                    } else if (timeToRandom == minsToTicks(10)) {
+                        colour = ChatFormatting.GREEN;
+                    }
+                    if (colour != null) {
+                        RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message" +
+                                        ".unstablecrafting" +
+                                        ".randomise_warn",
+                                ticksToMins(timeToRandom)).withStyle(colour), null));
+                    }
+                }
+            });
         });
+
     }
 }
