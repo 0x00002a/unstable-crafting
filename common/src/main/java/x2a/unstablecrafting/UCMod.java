@@ -1,9 +1,13 @@
 package x2a.unstablecrafting;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkChannel;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -38,21 +42,33 @@ public class UCMod {
         RECIPE_REDIRECTS.clear();
         var target = server.getRecipeManager();
         var targetRecipes =
-                target.getRecipes().stream().filter(r -> Arrays.stream(SUPPORTED_RECIPE_TYPES).anyMatch(c -> c.isInstance(r))).toList();
+                target.getRecipes()
+                        .stream()
+                        .filter(r -> Arrays.stream(SUPPORTED_RECIPE_TYPES)
+                                .anyMatch(c -> c.isInstance(r)))
+                        .toList();
         var outputs = new ArrayList<>(targetRecipes);
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
         Collections.shuffle(outputs, RAND);
 
         for (var recipe : targetRecipes) {
-            var repl = outputs.remove(outputs.size() - 1).getResultItem();
+            var repl = outputs.remove(outputs.size() - 1)
+                    .getResultItem();
             redirects.put(recipe.getId(), repl);
         }
         RECIPE_REDIRECTS = redirects;
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
-        server.getPlayerList().getPlayers().forEach(p -> {
-            p.connection.send(pkt);
-            p.getRecipeBook().sendInitialRecipeBook(p);
-        });
+        var warnPkt = new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.random_time")
+                .withStyle(ChatFormatting.DARK_AQUA),
+                SoundEvents.BELL_RESONATE);
+        server.getPlayerList()
+                .getPlayers()
+                .forEach(p -> {
+                    p.connection.send(pkt);
+                    p.getRecipeBook()
+                            .sendInitialRecipeBook(p);
+                    RAND_WARNING_CHAN.sendToPlayer(p, warnPkt);
+                });
     }
 
     public static long msToTicks(long ms) {
@@ -91,8 +107,21 @@ public class UCMod {
         RAND_WARNING_CHAN.register(RandomiseWarningPacket.class, RandomiseWarningPacket::encode, RandomiseWarningPacket::new,
                 RandomiseWarningPacket::apply);
         Log.info("Welcome to the world of recipes with half lives");
+
+        CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
+            dispatcher.register(Commands.literal("uc")
+                    .then(Commands.literal("decay")
+                            .executes(context -> {
+                                randomiseRecipes(context.getSource()
+                                        .getServer());
+                                return 0;
+                            })));
+        });
+
         LifecycleEvent.SERVER_STARTING.register(server -> {
-            RAND.setSeed(server.getWorldData().worldGenSettings().seed());
+            RAND.setSeed(server.getWorldData()
+                    .worldGenSettings()
+                    .seed());
             randomiseRecipes(server);
             Log.info("Recipes have started to decay");
         });
@@ -103,33 +132,32 @@ public class UCMod {
             if (tickCount % interval == 0) {
                 randomiseRecipes(inst);
             }
-            inst.getPlayerList().getPlayers().forEach(player -> {
-                ChatFormatting colour = null;
-                if (tickCount % interval == 0) {
-                    RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.random_time").withStyle(ChatFormatting.DARK_AQUA),
-                            SoundEvents.BELL_RESONATE));
-                } else if (timeToRandom <= secsToTicks(5)) {
-                    if (timeToRandom % 20 == 0) {
-                        RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.randomise_warn_secs",
-                                ticksToSecs(timeToRandom)).withStyle(ChatFormatting.DARK_RED),
-                                SoundEvents.NOTE_BLOCK_CHIME));
-                    }
-                } else {
-                    if (timeToRandom == minsToTicks(1)) {
-                        colour = ChatFormatting.RED;
-                    } else if (timeToRandom == minsToTicks(5)) {
-                        colour = ChatFormatting.YELLOW;
-                    } else if (timeToRandom == minsToTicks(10)) {
-                        colour = ChatFormatting.GREEN;
-                    }
-                    if (colour != null) {
-                        RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message" +
-                                        ".unstablecrafting" +
-                                        ".randomise_warn",
-                                ticksToMins(timeToRandom)).withStyle(colour), null));
-                    }
-                }
-            });
+            inst.getPlayerList()
+                    .getPlayers()
+                    .forEach(player -> {
+                        if (timeToRandom <= secsToTicks(5) && timeToRandom % 20 == 0) {
+                            RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.randomise_warn_secs",
+                                            ticksToSecs(timeToRandom))
+                                    .withStyle(ChatFormatting.DARK_RED),
+                                    SoundEvents.NOTE_BLOCK_CHIME));
+                        } else {
+                            ChatFormatting colour = null;
+                            if (timeToRandom == minsToTicks(1)) {
+                                colour = ChatFormatting.RED;
+                            } else if (timeToRandom == minsToTicks(5)) {
+                                colour = ChatFormatting.YELLOW;
+                            } else if (timeToRandom == minsToTicks(10)) {
+                                colour = ChatFormatting.GREEN;
+                            }
+                            if (colour != null) {
+                                RAND_WARNING_CHAN.sendToPlayer(player, new RandomiseWarningPacket(Component.translatable("message" +
+                                                        ".unstablecrafting" +
+                                                        ".randomise_warn",
+                                                ticksToMins(timeToRandom))
+                                        .withStyle(colour), null));
+                            }
+                        }
+                    });
         });
 
     }
