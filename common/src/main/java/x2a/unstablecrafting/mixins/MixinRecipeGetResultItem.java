@@ -11,7 +11,7 @@ import x2a.unstablecrafting.UCMod;
 
 @Mixin(value = {ShapedRecipe.class, AbstractCookingRecipe.class,
         ShapelessRecipe.class, CustomRecipe.class,
-})
+        SingleItemRecipe.class})
 public abstract class MixinRecipeGetResultItem {
 
     @Inject(at = @At("RETURN"), method = "getResultItem", cancellable = true)

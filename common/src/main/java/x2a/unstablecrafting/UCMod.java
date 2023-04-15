@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class UCMod {
     public static final Class<?>[] SUPPORTED_RECIPE_TYPES = {ShapedRecipe.class, AbstractCookingRecipe.class,
             ShapelessRecipe.class, CustomRecipe.class,
-    };
+            SingleItemRecipe.class};
 
     public static final String MOD_ID = "unstablecrafting";
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
