@@ -5,6 +5,7 @@ import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateRecipesPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +21,7 @@ public class UCMod {
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
 
     private static final Random RAND = new Random();
-    public static final Map<ItemStackKey, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
+    public static final Map<ResourceLocation, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
 
     public static UCConfig CONFIG;
 
@@ -36,7 +37,7 @@ public class UCMod {
 
         for (var recipe : recipes) {
             var repl = outputs.remove(outputs.size() - 1).getResultItem();
-            RECIPE_REDIRECTS.put(new ItemStackKey(recipe.getResultItem()), repl);
+            RECIPE_REDIRECTS.put(recipe.getId(), repl);
         }
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
         server.getPlayerList().getPlayers().forEach(p -> {
@@ -67,8 +68,8 @@ public class UCMod {
     }
 
     @Nullable
-    public static ItemStack replaceResult(ItemStack orig) {
-        var replace = UCMod.RECIPE_REDIRECTS.get(new ItemStackKey(orig));
+    public static ItemStack replaceResult(ResourceLocation orig) {
+        var replace = UCMod.RECIPE_REDIRECTS.get(orig);
         if (replace != null) {
             return replace.copy();
         }
