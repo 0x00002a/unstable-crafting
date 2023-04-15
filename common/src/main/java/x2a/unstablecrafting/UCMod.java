@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import x2a.unstablecrafting.network.RandomiseWarningPacket;
 
+import java.time.Duration;
 import java.util.*;
 
 public class UCMod {
@@ -101,7 +102,6 @@ public class UCMod {
         return null;
     }
 
-
     public static void init(UCConfig config) {
         CONFIG = config;
         RAND_WARNING_CHAN.register(RandomiseWarningPacket.class, RandomiseWarningPacket::encode, RandomiseWarningPacket::new,
@@ -110,6 +110,22 @@ public class UCMod {
 
         CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
             dispatcher.register(Commands.literal("uc")
+                    .then(Commands.literal("time")
+                            .executes(ctx -> {
+                                var tick = ctx.getSource()
+                                        .getServer()
+                                        .getTickCount();
+                                var interval = CONFIG.server.ticksPerRandomise.get();
+                                var timeToTick = interval - (tick % interval);
+                                ctx.getSource()
+                                        .getPlayer()
+                                        .sendSystemMessage(Component.translatable("message" +
+                                                                ".unstablecrafting.time",
+                                                        ticksToMins(timeToTick) / 60, ticksToMins(timeToTick),
+                                                        ticksToSecs(timeToTick))
+                                                .withStyle(ChatFormatting.GREEN));
+                                return 0;
+                            }))
                     .then(Commands.literal("decay")
                             .executes(context -> {
                                 randomiseRecipes(context.getSource()

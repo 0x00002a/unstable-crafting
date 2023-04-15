@@ -3,5 +3,6 @@
   "option.unstablecrafting.randomise_ticks": "Ticks per randomisation",
   "message.unstablecrafting.randomise_warn": "%d minutes until recipe randomisation",
   "message.unstablecrafting.randomise_warn_secs": "Randomisation in §3%d",
-  "message.unstablecrafting.random_time": "Let there be §krandomness!!"
+  "message.unstablecrafting.random_time": "Let there be §krandomness!!",
+  "message.unstablecrafting.time": "Time to randomisation is %dh%dm%ds"
 }
