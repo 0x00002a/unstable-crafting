@@ -4,9 +4,6 @@
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8.5",
   "mixins": [
-    "MixinRecipeAssembleCooking",
-    "MixinRecipeAssembleShapeless",
-    "MixinRecipeGetResultItem"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -19,17 +19,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import x2a.unstablecrafting.network.RandomiseWarningPacket;
+import x2a.unstablecrafting.overrides.RecipeClassOverride;
+import x2a.unstablecrafting.overrides.RecipeOverride;
 
 import java.time.Duration;
 import java.util.*;
 
 public class UCMod {
-    public static final Class<?>[] SUPPORTED_RECIPE_TYPES = {ShapedRecipe.class, AbstractCookingRecipe.class,
-            ShapelessRecipe.class, CustomRecipe.class,
-            SingleItemRecipe.class};
 
     public static final String MOD_ID = "unstablecrafting";
     public static final Logger Log = LogManager.getLogger("Unstable Crafting");
+    private static final UCOverrides RECIPE_OVERRIDES = new UCOverrides();
 
     private static final Random RAND = new Random();
     public static Map<ResourceLocation, ItemStack> RECIPE_REDIRECTS = new HashMap<>();
@@ -39,14 +39,11 @@ public class UCMod {
     public static UCConfig CONFIG;
 
     static void randomiseRecipes(MinecraftServer server) {
-        var redirects = new HashMap<ResourceLocation, ItemStack>();
-        RECIPE_REDIRECTS.clear();
         var target = server.getRecipeManager();
         var targetRecipes =
                 target.getRecipes()
                         .stream()
-                        .filter(r -> Arrays.stream(SUPPORTED_RECIPE_TYPES)
-                                .anyMatch(c -> c.isInstance(r)))
+                        .filter(RECIPE_OVERRIDES::matches)
                         .toList();
         var outputs = new ArrayList<>(targetRecipes);
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
@@ -55,9 +52,8 @@ public class UCMod {
         for (var recipe : targetRecipes) {
             var repl = outputs.remove(outputs.size() - 1)
                     .getResultItem();
-            redirects.put(recipe.getId(), repl);
+            RECIPE_OVERRIDES.apply(recipe, repl);
         }
-        RECIPE_REDIRECTS = redirects;
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
         var warnPkt = new RandomiseWarningPacket(Component.translatable("message.unstablecrafting.random_time")
                 .withStyle(ChatFormatting.DARK_AQUA),
@@ -107,6 +103,7 @@ public class UCMod {
         RAND_WARNING_CHAN.register(RandomiseWarningPacket.class, RandomiseWarningPacket::encode, RandomiseWarningPacket::new,
                 RandomiseWarningPacket::apply);
         Log.info("Welcome to the world of recipes with half lives");
+        applyVanillaOverrides(RECIPE_OVERRIDES);
 
         CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
             dispatcher.register(Commands.literal("uc")
@@ -176,5 +173,24 @@ public class UCMod {
                     });
         });
 
+    }
+    private static void applyVanillaOverrides(UCOverrides reg) {
+        RecipeOverride[] overrides = {
+                new RecipeClassOverride<>(ShapelessRecipe.class, (recipe, replace) -> {
+                    recipe.result = replace;
+                }),
+                new RecipeClassOverride<>(ShapedRecipe.class, (recipe, replace) -> {
+                    recipe.result = replace;
+                }),
+                new RecipeClassOverride<>(SingleItemRecipe.class, (recipe, replace) -> {
+                    recipe.result = replace;
+                }),
+                new RecipeClassOverride<>(AbstractCookingRecipe.class, (recipe, replace) -> {
+                    recipe.result = replace;
+                }),
+        };
+        for (var override : overrides) {
+            reg.register(override);
+        }
     }
 }
