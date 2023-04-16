@@ -24,6 +24,7 @@ import x2a.unstablecrafting.overrides.RecipeOverride;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UCMod {
 
@@ -48,10 +49,13 @@ public class UCMod {
         var outputs = new ArrayList<>(targetRecipes);
         outputs.sort(Comparator.comparing(Recipe::getId)); // this is so our rng is seed determined
         Collections.shuffle(outputs, RAND);
+        var outputItems = outputs.stream()
+                .map(Recipe::getResultItem)
+                .collect(Collectors.toCollection(ArrayList::new));
+        outputs.clear();
 
         for (var recipe : targetRecipes) {
-            var repl = outputs.remove(outputs.size() - 1)
-                    .getResultItem();
+            var repl = outputItems.remove(outputItems.size() - 1);
             RECIPE_OVERRIDES.apply(recipe, repl);
         }
         var pkt = new ClientboundUpdateRecipesPacket(target.getRecipes());
@@ -174,6 +178,7 @@ public class UCMod {
         });
 
     }
+
     private static void applyVanillaOverrides(UCOverrides reg) {
         RecipeOverride[] overrides = {
                 new RecipeClassOverride<>(ShapelessRecipe.class, (recipe, replace) -> {
